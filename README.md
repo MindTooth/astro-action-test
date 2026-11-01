@@ -10,6 +10,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | --- | --- | --- | --- |
 | [Automatic detection](.github/workflows/fixture.yml) | Omitted | 12.8.1 | pnpm/setup |
 | [Explicit manager](.github/workflows/pnpm.yml) | `package-manager: pnpm` | 12.8.1 | pnpm/setup |
+| [Override outside declared range](.github/workflows/pnpm-outside-range.yml) | `path: fixtures/pnpm-outside-range`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Explicit version override](.github/workflows/pnpm-override.yml) | `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Conflicting legacy pin](.github/workflows/pnpm-legacy-conflict.yml) | `path: fixtures/pnpm-legacy-conflict`, `package-manager: pnpm@12.8.2` | rejected | pnpm/action-setup |
 | [Legacy packageManager](.github/workflows/pnpm-legacy.yml) | `path: fixtures/legacy-pnpm` | 10.30.0 | pnpm/action-setup |
@@ -53,6 +54,8 @@ The exact-version and dist-tag fixtures declare `devEngines.packageManager.versi
 The conflicting-declarations fixture pins `packageManager: pnpm@12.8.1` and declares `devEngines.packageManager.version: 12.8.2`. It verifies that the latter takes precedence by checking both the installed version with project switching disabled and the version during the Astro build.
 
 The legacy-pin conflict fixture declares `packageManager: pnpm@10.30.0` and passes `package-manager: pnpm@12.8.2`. Its workflow expects the action to fail, checks that the explicit-version path was selected and no page was built, and verifies the installer’s conflict annotation names both versions. The failing step is intentional and the job succeeds only when the conflict is rejected.
+
+The outside-range override fixture declares `devEngines.packageManager.version: ^12.15.0` but requests `package-manager: pnpm@12.8.2`. A preinstall script records and checks the version during dependency installation, and the workflow checks the recorded value, the installed executable, and the version during the build. This catches unwanted project version switching in both action steps.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 

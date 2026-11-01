@@ -1,0 +1,19 @@
+{
+  "name": "astro-action-test-pnpm-outside-range",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "preinstall": "pnpm --version > .install-version && test \"$(cat .install-version)\" = 12.8.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.15.0",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "astro": "7.4.4"
+  }
+}
