@@ -38,6 +38,10 @@ jobs:
           test "$PNPM_SETUP" = false
           test ! -e fixtures/pnpm-legacy-conflict/dist/index.html
           git diff --exit-code -- fixtures/pnpm-legacy-conflict/package.json fixtures/pnpm-legacy-conflict/pnpm-lock.yaml
+  verify-error:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - name: Verify installer conflict annotation
         uses: actions/github-script@v8
         with:
@@ -46,7 +50,7 @@ jobs:
             const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
               owner, repo, run_id: context.runId, per_page: 100,
             });
-            const job = jobs.find(job => job.name === process.env.GITHUB_JOB);
+            const job = jobs.find(job => job.name === 'build');
             if (!job || !job.check_run_url) throw new Error('Could not locate this job’s check run');
             const check_run_id = Number(job.check_run_url.split('/').pop());
             const required = [
