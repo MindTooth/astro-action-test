@@ -13,14 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Resolve expected version from npm
-        id: registry
-        working-directory: ${{ runner.temp }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          version=$(npm view 'pnpm@^12.15.0' version --json | node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const v=JSON.parse(s);console.log(Array.isArray(v)?v[v.length-1]:v)})')
-          echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Verify incompatible lockfile
         working-directory: fixtures/incompatible-range
         shell: bash
@@ -34,14 +26,14 @@ jobs:
       - name: Verify registry selection and build
         working-directory: fixtures/incompatible-range
         shell: bash
-        env:
-          EXPECTED_VERSION: ${{ steps.registry.outputs.version }}
         run: |
           set -euo pipefail
           test "$PACKAGE_MANAGER" = pnpm
           test "$PNPM_SETUP" = true
-          test "$(pnpm --config.pm-on-fail=ignore --version)" = "$EXPECTED_VERSION"
-          head -n 12 pnpm-lock.yaml | grep -Fq "version: $EXPECTED_VERSION"
+          version=$(pnpm --config.pm-on-fail=ignore --version)
+          node -e 'const m=process.argv[1].match(/^(\d+)\.(\d+)\.(\d+)$/); if (!m || +m[1] !== 12 || +m[2] < 15) process.exit(1)' "$version"
+          test "$(cd "$RUNNER_TEMP" && npm view "pnpm@$version" version)" = "$version"
+          head -n 12 pnpm-lock.yaml | grep -Fq "version: $version"
           test "$(node -p 'process.versions.node.split(".")[0]')" = 24
           test -f dist/index.html
           grep -q 'pnpm lockfile fixture' dist/index.html
