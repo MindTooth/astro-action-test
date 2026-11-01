@@ -1,0 +1,39 @@
+name: pnpm lowercase pm_on_fail override fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      pnpm_config_pm_on_fail: error
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and upload fixture
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/pnpm-lowercase-conflict
+          package-manager: pnpm@12.8.2
+          build-cmd: test "$(pnpm --version)" = 12.8.2 && pnpm run build
+      - name: Verify lockfile selection and build
+        shell: bash
+        working-directory: fixtures/pnpm-lowercase-conflict
+        run: |
+          set -euo pipefail
+          test "$(node -p 'require("./package.json").devEngines.packageManager.version')" = '^12.15.0'
+          test "$(cat .install-version)" = 12.8.2
+          test "$pnpm_config_pm_on_fail" = error
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$PNPM_SETUP" = false
+          test "$VERSION" = 12.8.2
+          test "$(pnpm --config.pm-on-fail=ignore --version)" = 12.8.2
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          test -f dist/index.html
+          grep -q 'pnpm lockfile fixture' dist/index.html
+          git diff --exit-code -- package.json pnpm-lock.yaml
