@@ -10,6 +10,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | --- | --- | --- | --- |
 | [Automatic detection](.github/workflows/fixture.yml) | Omitted | 12.8.1 | pnpm/setup |
 | [Explicit manager](.github/workflows/pnpm.yml) | `package-manager: pnpm` | 12.8.1 | pnpm/setup |
+| [Preserve pm_on_fail without version](.github/workflows/pnpm-preserve-config.yml) | `path: fixtures/pnpm-preserve-config`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Lowercase pm_on_fail override](.github/workflows/pnpm-lowercase-conflict.yml) | `path: fixtures/pnpm-lowercase-conflict`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Override outside declared range](.github/workflows/pnpm-outside-range.yml) | `path: fixtures/pnpm-outside-range`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Explicit version override](.github/workflows/pnpm-override.yml) | `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
@@ -59,6 +60,8 @@ The legacy-pin conflict fixture declares `packageManager: pnpm@10.30.0` and pass
 The outside-range override fixture declares `devEngines.packageManager.version: ^12.15.0` but requests `package-manager: pnpm@12.8.2`. A preinstall script records and checks the version during dependency installation, and the workflow checks the recorded value, the installed executable, and the version during the build. This catches unwanted project version switching in both action steps.
 
 The lowercase-configuration fixture sets `pnpm_config_pm_on_fail: error` at job scope, declares `^12.15.0`, and explicitly requests pnpm 12.8.2. The preinstall script records the version actually used during installation, while the build command checks the version during build. The workflow verifies both with the conflicting lowercase setting in place.
+
+The preserve-configuration fixture pins pnpm 12.8.2 in the legacy `packageManager` field, passes `package-manager: pnpm` without a version, and sets `pnpm_config_pm_on_fail: error`. Its preinstall script records `pnpm config get pm-on-fail`, and its build command checks the same effective value. The workflow verifies the recorded install value so a skipped lifecycle script cannot pass.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 
