@@ -1,0 +1,18 @@
+name: npm explicit fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  fixture:
+    uses: ./.github/workflows/non-pnpm-fixture.yml
+    with:
+      manager: npm
+      package-manager: npm
+      node-version: '26'

@@ -1,4 +1,4 @@
-# Astro action pnpm lockfile fixture
+# Astro action fixtures
 
 A minimal Astro site exercising [MindTooth/action's pnpm lockfile support](https://github.com/MindTooth/action/tree/feat/support_pnpm_lockfile).
 
@@ -73,6 +73,21 @@ The configuration-casing fixture sets `PNPM_CONFIG_PM_ON_FAIL: error` and `pnpm_
 The Node runtime fixture declares Node 22.23.4 in `devEngines.runtime` and passes `node-version: 24`. It records the Node version and executable during `preinstall`, verifies Node 24 again during the build, and checks that dependency installation did not create a project-local Node executable or runtime package. A dependent job inspects the build log to verify exactly one Node 24 runtime setup, `pnpm install --no-runtime`, and that the separate Setup Node step was skipped.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
+
+## Other package managers
+
+The non-pnpm fixtures exercise the normal install path after the pnpm setup changes. Each has a generated lockfile and a minimal Astro page:
+
+| Fixture | Automatic detection | Explicit input | Node version |
+| --- | --- | --- | --- |
+| npm | `package-lock.json` ([workflow](.github/workflows/npm-auto.yml)) | `npm` ([workflow](.github/workflows/npm-explicit.yml)) | 24 automatic / 26 explicit |
+| Yarn Classic | `yarn.lock` ([workflow](.github/workflows/yarn-auto.yml)) | `yarn` ([workflow](.github/workflows/yarn-explicit.yml)) | 24 automatic / 26 explicit |
+| Bun | `bun.lock` ([workflow](.github/workflows/bun-auto.yml)) | `bun@1.4.4` ([workflow](.github/workflows/bun-explicit.yml)) | 24 automatic / 26 explicit |
+| Deno | `deno.json` and `deno.lock` ([workflow](.github/workflows/deno-auto.yml)) | `deno@2.9.6` ([workflow](.github/workflows/deno-explicit.yml)) | No actions/setup-node |
+
+These eight workflows share [non-pnpm-fixture.yml](.github/workflows/non-pnpm-fixture.yml). They check manager selection, `PNPM_SETUP=false`, a rendered fixture page, unchanged manifests and lockfiles, and no unexpected generated files. Explicit Bun and Deno inputs also check the installed runtime version. The action does not install a requested npm or Yarn version, so those fixtures select the manager without a version pin.
+
+A dependent job inspects the action logs: both pnpm setup actions must be skipped, and actions/setup-node must run exactly once for npm, Yarn, and Bun, or zero times for Deno. Each combination has its own workflow run to avoid the fixed Pages artifact name colliding. The Deno fixture uses a Deno task to run Astro with npm compatibility.
 
 ## Run locally
 

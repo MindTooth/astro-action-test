@@ -1,0 +1,6 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "build": "deno run -A npm:astro@7.4.4 build"
+  }
+}

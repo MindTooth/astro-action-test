@@ -1,0 +1,93 @@
+name: Non-pnpm fixture checks
+
+on:
+  workflow_call:
+    inputs:
+      manager:
+        required: true
+        type: string
+      package-manager:
+        default: ''
+        type: string
+      node-version:
+        default: '24'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and upload fixture
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/${{ inputs.manager }}
+          package-manager: ${{ inputs.package-manager }}
+          node-version: ${{ inputs.node-version }}
+      - name: Verify manager selection and build
+        shell: bash
+        working-directory: fixtures/${{ inputs.manager }}
+        env:
+          EXPECTED_MANAGER: ${{ inputs.manager }}
+          EXPECTED_NODE: ${{ inputs.node-version }}
+        run: |
+          set -euo pipefail
+          test "$PACKAGE_MANAGER" = "$EXPECTED_MANAGER"
+          test "$PNPM_SETUP" = false
+          case "$EXPECTED_MANAGER" in
+            npm|yarn|bun)
+              test "$(node -p 'process.versions.node.split(".")[0]')" = "$EXPECTED_NODE"
+              test -d node_modules/astro
+              ;;
+            deno)
+              deno eval 'if (!Deno.version.deno) throw new Error("Missing Deno runtime")'
+              ;;
+          esac
+          case "$EXPECTED_MANAGER:$VERSION" in
+            bun:latest|deno:vx.x.x|npm:*|yarn:*) ;;
+            bun:*) test "$(bun --version)" = "$VERSION" ;;
+            deno:*) test "$(deno eval 'console.log(Deno.version.deno)')" = "$VERSION" ;;
+          esac
+          test -f dist/index.html
+          grep -q "$EXPECTED_MANAGER fixture" dist/index.html
+          git diff --exit-code -- package.json package-lock.json yarn.lock bun.lock deno.json deno.lock
+          test -z "$(git ls-files --others --exclude-standard)"
+  verify-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify setup paths
+        uses: actions/github-script@v8
+        env:
+          EXPECTED_MANAGER: ${{ inputs.manager }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: context.runId, per_page: 100,
+            });
+            const job = jobs.find(job => job.name.endsWith('/ build'));
+            if (!job) throw new Error('Could not locate the build job');
+            const response = await github.rest.actions.downloadJobLogsForWorkflowRun({
+              owner, repo, job_id: job.id,
+            });
+            const log = typeof response.data === 'string' ? response.data : Buffer.from(response.data).toString('utf8');
+            const manager = process.env.EXPECTED_MANAGER;
+            const expectedSteps = {
+              'pnpm_action-setup': 'skipped',
+              'pnpm_setup': 'skipped',
+              'actions_setup-node': ['npm', 'yarn'].includes(manager) ? 'success' : 'skipped',
+              'actions_setup-node_2': manager === 'bun' ? 'success' : 'skipped',
+            };
+            for (const [action, outcome] of Object.entries(expectedSteps)) {
+              if (!log.includes(`id=__MindTooth_action.__${action};outcome=${outcome};conclusion=${outcome}`)) {
+                throw new Error(`Expected ${action} to be ${outcome}`);
+              }
+            }
+            if (log.includes('Running pnpm install --no-runtime...')) {
+              throw new Error('Unexpected pnpm delegated install');
+            }
