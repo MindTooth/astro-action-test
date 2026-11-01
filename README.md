@@ -15,6 +15,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | [No version declaration](.github/workflows/pnpm-fallback.yml) | `path: fixtures/no-version-pnpm` | npm `latest` tag | pnpm/action-setup |
 | [Workspace member](.github/workflows/pnpm-workspace.yml) | `path: fixtures/workspace/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Per-project workspace lockfile](.github/workflows/pnpm-workspace-unshared.yml) | `path: fixtures/workspace-unshared/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
+| [Custom workspace lockfile directory](.github/workflows/pnpm-workspace-lockfile-dir.yml) | `path: fixtures/workspace-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 
 Each workflow builds and uploads the site through the feature branch, then checks the installed pnpm version with project version switching disabled, the selected action path, Node 24, the rendered page, and that the manifest and lockfile remain unchanged. The override also checks `pnpm --version` inside the action's build step to catch project version switching back to 12.8.1.
 
@@ -25,6 +26,8 @@ The no-version fixture declares neither `packageManager` nor `devEngines.package
 The workspace fixture puts the Astro site in `fixtures/workspace/apps/site`, with no member lockfile. The root `pnpm-workspace.yaml` includes `apps/*`, and the shared `pnpm-lock.yaml` records pnpm 12.8.1. Both root and site declare `devEngines.packageManager.version: ^12.0.0`; the site's declaration enables delegation to pnpm/setup. The workflow explicitly selects `package-manager: pnpm` because automatic detection does not search parent directories. It checks that the member lockfile is absent before and after building, pnpm 12.8.1 is used during the build, and the shared lockfile and manifests remain unchanged.
 
 The per-project workspace fixture sets `sharedWorkspaceLockfile: false` in `fixtures/workspace-unshared/pnpm-workspace.yaml`. Only the site declares the pnpm range, and its lockfile records pnpm 12.8.2; the root has a separate dependency lockfile with no pnpm version declaration. This verifies that setup retains the member declaration and selects its locked version. The site lockfile was generated independently with pnpm 12.8.2. The workflow explicitly selects `package-manager: pnpm`, checks the version during the Astro build, and verifies that both lockfiles, manifests, and workspace configuration remain unchanged.
+
+The custom-directory workspace fixture sets `lockfileDir: lockfiles` in `fixtures/workspace-lockfile-dir/pnpm-workspace.yaml`. Its generated shared lockfile is `lockfiles/pnpm-lock.yaml`, relative to the workspace configuration, and records pnpm 12.8.1. The nested site has no lockfile, and there is no default root lockfile. The workflow uses explicit `package-manager: pnpm`, verifies the selected version during the Astro build, checks the lockfile layout before and after, and requires the custom lockfile, manifests, and workspace configuration to remain unchanged.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 
