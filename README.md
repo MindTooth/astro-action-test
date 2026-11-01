@@ -70,7 +70,7 @@ The uppercase-configuration fixture mirrors the unversioned-input preservation c
 
 The configuration-casing fixture sets `PNPM_CONFIG_PM_ON_FAIL: error` and `pnpm_config_pm_on_fail: ignore`, while passing `package-manager: pnpm` without a version. It checks the effective value during installation and build, verifying that uppercase `error` wins.
 
-The Node runtime fixture declares Node 22.23.4 in `devEngines.runtime` and passes `node-version: 24`. It records the Node version and executable during `preinstall`, verifies Node 24 again during the build, and checks that dependency installation did not create a project-local Node executable or runtime package. The action delegates the single Node setup and dependency installation to pnpm/setup.
+The Node runtime fixture declares Node 22.23.4 in `devEngines.runtime` and passes `node-version: 24`. It records the Node version and executable during `preinstall`, verifies Node 24 again during the build, and checks that dependency installation did not create a project-local Node executable or runtime package. A dependent job inspects the build log to verify exactly one Node 24 runtime setup, `pnpm install --no-runtime`, and that the separate Setup Node step was skipped.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 

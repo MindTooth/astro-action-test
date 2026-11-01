@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -36,3 +37,31 @@ jobs:
           test -f dist/index.html
           grep -q 'pnpm lockfile fixture' dist/index.html
           git diff --exit-code -- package.json pnpm-lock.yaml
+  verify-node-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify one Node setup and install without runtime
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: context.runId, per_page: 100,
+            });
+            const job = jobs.find(job => job.name === 'build');
+            if (!job) throw new Error('Could not locate the build job');
+            const response = await github.rest.actions.downloadJobLogsForWorkflowRun({
+              owner, repo, job_id: job.id,
+            });
+            const log = typeof response.data === 'string' ? response.data : Buffer.from(response.data).toString('utf8');
+            const setups = log.match(/Installing runtime node@[^\s.]+/g) || [];
+            if (setups.length !== 1 || setups[0] !== 'Installing runtime node@24') {
+              throw new Error(`Expected one Node 24 setup, found: ${setups.join(', ')}`);
+            }
+            if (!log.includes('Running pnpm install --no-runtime...')) {
+              throw new Error('pnpm install did not use --no-runtime');
+            }
+            if (!/__actions_setup-node;outcome=skipped;conclusion=skipped/.test(log)) {
+              throw new Error('The separate Setup Node step was not skipped');
+            }
