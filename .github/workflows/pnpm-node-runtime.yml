@@ -1,0 +1,38 @@
+name: pnpm explicit Node runtime fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and upload fixture
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/pnpm-node-runtime
+          node-version: '24'
+          build-cmd: test "$(node -p 'process.versions.node.split(".")[0]')" = 24 && pnpm run build
+      - name: Verify lockfile selection and build
+        shell: bash
+        working-directory: fixtures/pnpm-node-runtime
+        run: |
+          set -euo pipefail
+          test "$(node -p 'require("./package.json").devEngines.runtime.version')" = 22.23.4
+          test "$(cut -d. -f1 .install-node-version)" = 24
+          test "$(cat .install-node-path)" = "$(node -p 'process.execPath')"
+          test ! -e node_modules/.bin/node
+          test -z "$(find node_modules/.pnpm -maxdepth 1 -type d -name 'node@*' -print -quit)"
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$PNPM_SETUP" = true
+          test "$(pnpm --config.pm-on-fail=ignore --version)" = 12.8.2
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          test -f dist/index.html
+          grep -q 'pnpm lockfile fixture' dist/index.html
+          git diff --exit-code -- package.json pnpm-lock.yaml

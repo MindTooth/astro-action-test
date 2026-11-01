@@ -25,6 +25,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | [Included lockfile directory](.github/workflows/pnpm-workspace-included-lockfile-dir.yml) | `path: fixtures/workspace-included-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.15.0 | pnpm/setup |
 | [Site version without root declaration](.github/workflows/pnpm-workspace-site-version.yml) | `path: fixtures/workspace-site-version/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
 | [Conflicting pnpm declarations](.github/workflows/pnpm-dual-declaration.yml) | `path: fixtures/pnpm-dual-declaration` | 12.8.2 | pnpm/setup |
+| [Explicit Node with devEngines.runtime](.github/workflows/pnpm-node-runtime.yml) | `path: fixtures/pnpm-node-runtime`, `node-version: 24` | 12.8.2 | pnpm/setup |
 | [Exact pnpm declaration](.github/workflows/pnpm-exact.yml) | `path: fixtures/pnpm-exact` | 12.8.2 | pnpm/setup |
 | [pnpm dist-tag declaration](.github/workflows/pnpm-tag.yml) | `path: fixtures/pnpm-tag` | npm `latest` tag | pnpm/setup |
 | [Incompatible locked version](.github/workflows/pnpm-incompatible-range.yml) | `path: fixtures/incompatible-range` | registry version matching `^12.15.0` | pnpm/setup |
@@ -68,6 +69,8 @@ The preserve-configuration fixture pins pnpm 12.8.2 in the legacy `packageManage
 The uppercase-configuration fixture mirrors the unversioned-input preservation check with `PNPM_CONFIG_PM_ON_FAIL: error`. It records pnpm's effective setting during installation and verifies it again during the build.
 
 The configuration-casing fixture sets `PNPM_CONFIG_PM_ON_FAIL: error` and `pnpm_config_pm_on_fail: ignore`, while passing `package-manager: pnpm` without a version. It checks the effective value during installation and build, verifying that uppercase `error` wins.
+
+The Node runtime fixture declares Node 22.23.4 in `devEngines.runtime` and passes `node-version: 24`. It records the Node version and executable during `preinstall`, verifies Node 24 again during the build, and checks that dependency installation did not create a project-local Node executable or runtime package. The action delegates the single Node setup and dependency installation to pnpm/setup.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 
