@@ -11,6 +11,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | [Automatic detection](.github/workflows/fixture.yml) | Omitted | 12.8.1 | pnpm/setup |
 | [Explicit manager](.github/workflows/pnpm.yml) | `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Explicit version override](.github/workflows/pnpm-override.yml) | `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
+| [Conflicting legacy pin](.github/workflows/pnpm-legacy-conflict.yml) | `path: fixtures/pnpm-legacy-conflict`, `package-manager: pnpm@12.8.2` | rejected | pnpm/action-setup |
 | [Legacy packageManager](.github/workflows/pnpm-legacy.yml) | `path: fixtures/legacy-pnpm` | 10.30.0 | pnpm/action-setup |
 | [No version declaration](.github/workflows/pnpm-fallback.yml) | `path: fixtures/no-version-pnpm` | npm `latest` tag | pnpm/action-setup |
 | [Workspace member](.github/workflows/pnpm-workspace.yml) | `path: fixtures/workspace/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
@@ -50,6 +51,8 @@ The incompatible-range fixture changes the site's declared pnpm range to `^12.15
 The exact-version and dist-tag fixtures declare `devEngines.packageManager.version` as `12.8.2` and `latest`, respectively. Their workflows verify the selected version and build the site. The dist-tag workflow checks npm's current `latest` value at run time and allows pnpm to update its lockfile when that tag changes.
 
 The conflicting-declarations fixture pins `packageManager: pnpm@12.8.1` and declares `devEngines.packageManager.version: 12.8.2`. It verifies that the latter takes precedence by checking both the installed version with project switching disabled and the version during the Astro build.
+
+The legacy-pin conflict fixture declares `packageManager: pnpm@10.30.0` and passes `package-manager: pnpm@12.8.2`. Its workflow expects the action to fail, checks that the explicit-version path was selected, and checks that no page was built. The failing step is intentional and the job succeeds only when the conflict is rejected.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 

@@ -1,0 +1,38 @@
+name: pnpm legacy pin conflict fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify conflicting versions
+        working-directory: fixtures/pnpm-legacy-conflict
+        shell: bash
+        run: test "$(node -p 'require("./package.json").packageManager')" = pnpm@10.30.0
+      - name: Attempt build with conflicting version
+        id: conflict
+        continue-on-error: true
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/pnpm-legacy-conflict
+          package-manager: pnpm@12.8.2
+      - name: Verify the action rejected the conflict
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.conflict.outcome }}
+        run: |
+          set -euo pipefail
+          test "$OUTCOME" = failure
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$VERSION" = 12.8.2
+          test "$PNPM_SETUP" = false
+          test ! -e fixtures/pnpm-legacy-conflict/dist/index.html
+          git diff --exit-code -- fixtures/pnpm-legacy-conflict/package.json fixtures/pnpm-legacy-conflict/pnpm-lock.yaml
