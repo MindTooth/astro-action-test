@@ -1,0 +1,18 @@
+{
+  "name": "astro-action-test-incompatible-range",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.15.0",
+      "onFail": "download"
+    }
+  },
+  "dependencies": {
+    "astro": "7.4.4"
+  }
+}
