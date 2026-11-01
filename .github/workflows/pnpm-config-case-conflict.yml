@@ -13,9 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PNPM_CONFIG_PM_ON_FAIL: error
-      pnpm_config_pm_on_fail: ignore
     steps:
       - uses: actions/checkout@v7
+      - name: Set conflicting lowercase configuration
+        run: echo "pnpm_config_pm_on_fail=ignore" >> "$GITHUB_ENV"
       - name: Build and upload fixture
         uses: MindTooth/action@feat/support_pnpm_lockfile
         with:
