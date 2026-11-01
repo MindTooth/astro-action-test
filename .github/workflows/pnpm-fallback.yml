@@ -1,0 +1,55 @@
+name: pnpm latest fallback fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout action under test
+        uses: actions/checkout@v7
+        with:
+          repository: MindTooth/action
+          ref: feat/support_pnpm_lockfile
+          path: .fixture-action
+      - name: Verify fallback warning
+        shell: bash
+        working-directory: fixtures/no-version-pnpm
+        run: |
+          set -euo pipefail
+          scratch=$(mktemp -d)
+          trap 'rm -rf "$scratch"' EXIT
+          awk '
+            /^      run: \|/ { copying = 1; next }
+            copying && /^    - name:/ { exit }
+            copying { sub(/^        /, ""); print }
+          ' ../../.fixture-action/action.yml > "$scratch/check-lockfiles.sh"
+          GITHUB_ENV="$scratch/env" INPUT_PM="" bash -e "$scratch/check-lockfiles.sh" > "$scratch/log"
+          grep -Fq '::warning title=Could not detect PNPM version::No pnpm version found in `package.json`. Using latest PNPM version instead.' "$scratch/log"
+          grep -Fxq 'PACKAGE_MANAGER=pnpm' "$scratch/env"
+          grep -Fxq 'PNPM_SETUP=false' "$scratch/env"
+          grep -Fxq 'VERSION=latest' "$scratch/env"
+      - name: Build and upload fixture
+        uses: ./.fixture-action
+        with:
+          path: fixtures/no-version-pnpm
+      - name: Verify latest selection and build
+        shell: bash
+        working-directory: fixtures/no-version-pnpm
+        run: |
+          set -euo pipefail
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$PNPM_SETUP" = false
+          test "$VERSION" = latest
+          test "$(pnpm --config.manage-package-manager-versions=false --version)" = "$(npm view pnpm@latest version)"
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          test -f dist/index.html
+          grep -q 'pnpm lockfile fixture' dist/index.html
+          git diff --exit-code -- package.json pnpm-lock.yaml
