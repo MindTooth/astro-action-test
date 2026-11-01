@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  checks: read
 
 jobs:
   build:
@@ -36,3 +38,27 @@ jobs:
           test "$PNPM_SETUP" = false
           test ! -e fixtures/pnpm-legacy-conflict/dist/index.html
           git diff --exit-code -- fixtures/pnpm-legacy-conflict/package.json fixtures/pnpm-legacy-conflict/pnpm-lock.yaml
+      - name: Verify installer conflict annotation
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: context.runId, per_page: 100,
+            });
+            const job = jobs.find(job => job.name === process.env.GITHUB_JOB);
+            if (!job || !job.check_run_url) throw new Error('Could not locate this job’s check run');
+            const check_run_id = Number(job.check_run_url.split('/').pop());
+            const required = [
+              'Multiple versions of pnpm specified:',
+              'version 12.8.2 in the GitHub Action config',
+              'version pnpm@10.30.0 in the package.json',
+            ];
+            for (let attempt = 0; attempt < 10; attempt++) {
+              const annotations = await github.paginate(github.rest.checks.listAnnotations, {
+                owner, repo, check_run_id, per_page: 100,
+              });
+              if (annotations.some(a => required.every(part => a.message.includes(part)))) return;
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            throw new Error('The installer did not report the expected pnpm version conflict');
