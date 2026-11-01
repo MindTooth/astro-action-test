@@ -1,0 +1,11 @@
+{
+  "name": "astro-action-test-workspace-excluded",
+  "private": true,
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.0.0",
+      "onFail": "download"
+    }
+  }
+}

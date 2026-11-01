@@ -1,0 +1,39 @@
+name: pnpm excluded workspace site fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify excluded site lockfile layout
+        shell: bash
+        run: |
+          test -f fixtures/workspace-excluded/pnpm-lock.yaml
+          test -f fixtures/workspace-excluded/apps/site/pnpm-lock.yaml
+      - name: Build and upload fixture
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/workspace-excluded/apps/site
+          package-manager: pnpm
+          build-cmd: test "$(pnpm --version)" = 12.8.2 && pnpm run build
+      - name: Verify excluded site lockfile selection and build
+        shell: bash
+        working-directory: fixtures/workspace-excluded/apps/site
+        run: |
+          set -euo pipefail
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$PNPM_SETUP" = true
+          test "$(pnpm --config.pm-on-fail=ignore --version)" = 12.8.2
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          test -f dist/index.html
+          grep -q 'pnpm lockfile fixture' dist/index.html
+          test -f pnpm-lock.yaml
+          git diff --exit-code -- ../../package.json ../../pnpm-workspace.yaml ../../pnpm-lock.yaml package.json pnpm-lock.yaml
