@@ -18,6 +18,8 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | [Custom workspace lockfile directory](.github/workflows/pnpm-workspace-lockfile-dir.yml) | `path: fixtures/workspace-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Included lockfile directory](.github/workflows/pnpm-workspace-included-lockfile-dir.yml) | `path: fixtures/workspace-included-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.15.0 | pnpm/setup |
 | [Site version without root declaration](.github/workflows/pnpm-workspace-site-version.yml) | `path: fixtures/workspace-site-version/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
+| [Exact pnpm declaration](.github/workflows/pnpm-exact.yml) | `path: fixtures/pnpm-exact` | 12.8.2 | pnpm/setup |
+| [pnpm dist-tag declaration](.github/workflows/pnpm-tag.yml) | `path: fixtures/pnpm-tag` | npm `latest` tag | pnpm/setup |
 | [Incompatible locked version](.github/workflows/pnpm-incompatible-range.yml) | `path: fixtures/incompatible-range` | registry version matching `^12.15.0` | pnpm/setup |
 | [Root declaration precedence](.github/workflows/pnpm-workspace-precedence.yml) | `path: fixtures/workspace-precedence/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Excluded workspace site](.github/workflows/pnpm-workspace-excluded.yml) | `path: fixtures/workspace-excluded/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
@@ -43,6 +45,8 @@ The root-precedence workspace fixture gives the root `^12.0.0` with pnpm 12.8.1 
 The site-version workspace fixture has no root pnpm version declaration; the nested Astro site's `devEngines.packageManager` declares pnpm 12.8.2. The workflow uses explicit `package-manager: pnpm` and verifies that version during setup and build, along with the shared-lockfile layout and unchanged manifests.
 
 The incompatible-range fixture changes the site's declared pnpm range to `^12.15.0` while retaining a lockfile recording 12.8.1. Its workflow confirms the original lockfile is incompatible, then checks that the action installs a published npm registry version within the declared range and updates the pnpm lockfile entry. Dependency installation and the Astro build still run normally; the lockfile change is expected for this fixture.
+
+The exact-version and dist-tag fixtures declare `devEngines.packageManager.version` as `12.8.2` and `latest`, respectively. Their workflows verify the selected version and build the site. The dist-tag workflow checks npm's current `latest` value at run time and allows pnpm to update its lockfile when that tag changes.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 

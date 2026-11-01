@@ -1,0 +1,33 @@
+name: pnpm dist-tag fixture
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and upload fixture
+        uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/pnpm-tag
+      - name: Verify lockfile selection and build
+        shell: bash
+        working-directory: fixtures/pnpm-tag
+        run: |
+          set -euo pipefail
+          test "$PACKAGE_MANAGER" = pnpm
+          test "$PNPM_SETUP" = true
+          version=$(pnpm --config.pm-on-fail=ignore --version)
+          test "$version" = "$(cd "$RUNNER_TEMP" && npm view pnpm@latest version)"
+          test "$(pnpm --version)" = "$version"
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          test -f dist/index.html
+          grep -q 'pnpm lockfile fixture' dist/index.html
+          git diff --exit-code -- package.json
