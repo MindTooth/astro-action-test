@@ -10,6 +10,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | --- | --- | --- | --- |
 | [Automatic detection](.github/workflows/fixture.yml) | Omitted | 12.8.1 | pnpm/setup |
 | [Explicit manager](.github/workflows/pnpm.yml) | `package-manager: pnpm` | 12.8.1 | pnpm/setup |
+| [Conflicting pm_on_fail casing](.github/workflows/pnpm-config-case-conflict.yml) | `path: fixtures/pnpm-config-case-conflict`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Preserve uppercase pm_on_fail](.github/workflows/pnpm-preserve-uppercase.yml) | `path: fixtures/pnpm-preserve-uppercase`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Preserve pm_on_fail without version](.github/workflows/pnpm-preserve-config.yml) | `path: fixtures/pnpm-preserve-config`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Lowercase pm_on_fail override](.github/workflows/pnpm-lowercase-conflict.yml) | `path: fixtures/pnpm-lowercase-conflict`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
@@ -65,6 +66,8 @@ The lowercase-configuration fixture sets `pnpm_config_pm_on_fail: error` at job 
 The preserve-configuration fixture pins pnpm 12.8.2 in the legacy `packageManager` field, passes `package-manager: pnpm` without a version, and sets `pnpm_config_pm_on_fail: error`. Its preinstall script records `pnpm config get pm-on-fail`, and its build command checks the same effective value. The workflow verifies the recorded install value so a skipped lifecycle script cannot pass.
 
 The uppercase-configuration fixture mirrors the unversioned-input preservation check with `PNPM_CONFIG_PM_ON_FAIL: error`. It records pnpm's effective setting during installation and verifies it again during the build.
+
+The configuration-casing fixture sets `PNPM_CONFIG_PM_ON_FAIL: error` and `pnpm_config_pm_on_fail: ignore`, while passing `package-manager: pnpm` without a version. It checks the effective value during installation and build, verifying that uppercase `error` wins.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 

@@ -1,0 +1,13 @@
+{
+  "name": "astro-action-test-pnpm-config-case-conflict",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "preinstall": "pnpm config get pm-on-fail > .install-pm-on-fail && test \"$(cat .install-pm-on-fail)\" = error"
+  },
+  "dependencies": {
+    "astro": "7.4.4"
+  },
+  "packageManager": "pnpm@12.8.2"
+}
