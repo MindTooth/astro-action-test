@@ -17,6 +17,7 @@ The first three workflows reuse the root site and lockfile. The remaining fixtur
 | [Per-project workspace lockfile](.github/workflows/pnpm-workspace-unshared.yml) | `path: fixtures/workspace-unshared/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
 | [Custom workspace lockfile directory](.github/workflows/pnpm-workspace-lockfile-dir.yml) | `path: fixtures/workspace-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Included lockfile directory](.github/workflows/pnpm-workspace-included-lockfile-dir.yml) | `path: fixtures/workspace-included-lockfile-dir/apps/site`, `package-manager: pnpm` | 12.15.0 | pnpm/setup |
+| [Site version without root declaration](.github/workflows/pnpm-workspace-site-version.yml) | `path: fixtures/workspace-site-version/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
 | [Root declaration precedence](.github/workflows/pnpm-workspace-precedence.yml) | `path: fixtures/workspace-precedence/apps/site`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Excluded workspace site](.github/workflows/pnpm-workspace-excluded.yml) | `path: fixtures/workspace-excluded/apps/site`, `package-manager: pnpm` | 12.8.2 | pnpm/setup |
 
@@ -37,6 +38,8 @@ The included-config workspace fixture delegates `lockfileDir` with `include: { '
 The excluded-site fixture has workspace patterns `apps/*` and `!apps/site`, so the Astro site is explicitly excluded. Both manifests declare `^12.0.0`, but the root lockfile records pnpm 12.8.1 and the site's own lockfile records 12.8.2. The site reuses the independently generated lockfile from the per-project fixture, which has the same dependencies and pnpm declaration. The workflow uses explicit `package-manager: pnpm` and checks pnpm 12.8.2 during the build, so accidentally treating the site as a workspace member fails. It also verifies that neither manifest, lockfile, nor workspace configuration changes.
 
 The root-precedence workspace fixture gives the root `^12.0.0` with pnpm 12.8.1 locked, while the Astro site declares `^12.8.2`. The workflow explicitly sets `package-manager: pnpm` and checks that pnpm 12.8.1 is used during the build and remains installed. This version falls outside the site's range, demonstrating that the root declaration takes precedence.
+
+The site-version workspace fixture has no root pnpm version declaration; the nested Astro site's `devEngines.packageManager` declares pnpm 12.8.2. The workflow uses explicit `package-manager: pnpm` and verifies that version during setup and build, along with the shared-lockfile layout and unchanged manifests.
 
 Separate workflows avoid conflicts from the action's fixed Pages artifact name. They upload artifacts without deploying a website. Run them from the Actions tab or push a change to repeat the checks. Their action references intentionally follow the feature branch.
 
