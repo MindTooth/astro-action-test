@@ -15,8 +15,11 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build and upload fixture
         uses: MindTooth/action@feat/support_pnpm_lockfile
+        with:
+          path: fixtures/pnpm-lockfile
       - name: Verify lockfile selection and build
         shell: bash
+        working-directory: fixtures/pnpm-lockfile
         run: |
           set -euo pipefail
           test "$PACKAGE_MANAGER" = pnpm

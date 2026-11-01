@@ -2,20 +2,20 @@
 
 A minimal Astro site exercising [MindTooth/action's pnpm lockfile support](https://github.com/MindTooth/action/tree/feat/support_pnpm_lockfile).
 
-`package.json` declares `devEngines.packageManager.version: ^12.0.0`, with no legacy `packageManager` pin. The generated `pnpm-lock.yaml` records pnpm **12.8.1**, an older version within that range. The action must install that locked version instead of resolving the newest matching release.
+`fixtures/pnpm-lockfile/package.json` declares `devEngines.packageManager.version: ^12.0.0`, with no legacy `packageManager` pin. The generated `pnpm-lock.yaml` records pnpm **12.8.1**, an older version within that range. The action must install that locked version instead of resolving the newest matching release.
 
-The first three workflows reuse the root site and lockfile. The remaining fixtures have their own manifests and lockfiles under `fixtures/`:
+The automatic detection, explicit pnpm manager, and pnpm version override workflows reuse `fixtures/pnpm-lockfile`. All fixtures have their own manifests and lockfiles under `fixtures/`. The repository root has no package-manager requirement, so setup-node can query npm’s cache without encountering a pnpm declaration:
 
 | Workflow | Action input | Expected pnpm | Setup path |
 | --- | --- | --- | --- |
-| [Automatic detection](.github/workflows/fixture.yml) | Omitted | 12.8.1 | pnpm/setup |
-| [Explicit manager](.github/workflows/pnpm.yml) | `package-manager: pnpm` | 12.8.1 | pnpm/setup |
+| [Automatic detection](.github/workflows/fixture.yml) | `path: fixtures/pnpm-lockfile` | 12.8.1 | pnpm/setup |
+| [Explicit manager](.github/workflows/pnpm.yml) | `path: fixtures/pnpm-lockfile`, `package-manager: pnpm` | 12.8.1 | pnpm/setup |
 | [Conflicting pm_on_fail casing](.github/workflows/pnpm-config-case-conflict.yml) | `path: fixtures/pnpm-config-case-conflict`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Preserve uppercase pm_on_fail](.github/workflows/pnpm-preserve-uppercase.yml) | `path: fixtures/pnpm-preserve-uppercase`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Preserve pm_on_fail without version](.github/workflows/pnpm-preserve-config.yml) | `path: fixtures/pnpm-preserve-config`, `package-manager: pnpm` | 12.8.2 | pnpm/action-setup |
 | [Lowercase pm_on_fail override](.github/workflows/pnpm-lowercase-conflict.yml) | `path: fixtures/pnpm-lowercase-conflict`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Override outside declared range](.github/workflows/pnpm-outside-range.yml) | `path: fixtures/pnpm-outside-range`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
-| [Explicit version override](.github/workflows/pnpm-override.yml) | `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
+| [Explicit version override](.github/workflows/pnpm-override.yml) | `path: fixtures/pnpm-lockfile`, `package-manager: pnpm@12.8.2` | 12.8.2 | pnpm/action-setup |
 | [Conflicting legacy pin](.github/workflows/pnpm-legacy-conflict.yml) | `path: fixtures/pnpm-legacy-conflict`, `package-manager: pnpm@12.8.2` | rejected | pnpm/action-setup |
 | [Legacy packageManager](.github/workflows/pnpm-legacy.yml) | `path: fixtures/legacy-pnpm` | 10.30.0 | pnpm/action-setup |
 | [No version declaration](.github/workflows/pnpm-fallback.yml) | `path: fixtures/no-version-pnpm` | npm `latest` tag | pnpm/action-setup |
@@ -94,6 +94,7 @@ A dependent job inspects the action logs: both pnpm setup actions must be skippe
 With pnpm 12.8.1 and Node 24 or newer:
 
 ```sh
+cd fixtures/pnpm-lockfile
 pnpm install --frozen-lockfile
 pnpm run build
 ```
