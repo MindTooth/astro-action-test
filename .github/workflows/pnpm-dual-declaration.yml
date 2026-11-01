@@ -17,8 +17,8 @@ jobs:
         shell: bash
         working-directory: fixtures/pnpm-dual-declaration
         run: |
-          test "$(node -p 'require(\"./package.json\").packageManager')" = pnpm@12.8.1
-          test "$(node -p 'require(\"./package.json\").devEngines.packageManager.version')" = 12.8.2
+          test "$(node -p 'require("./package.json").packageManager')" = pnpm@12.8.1
+          test "$(node -p 'require("./package.json").devEngines.packageManager.version')" = 12.8.2
       - name: Build and upload fixture
         uses: MindTooth/action@feat/support_pnpm_lockfile
         with:
